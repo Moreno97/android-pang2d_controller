@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.andretietz.android.controller.ActionView;
 import com.andretietz.android.controller.DirectionView;
@@ -27,25 +26,19 @@ public class ControllerActivity extends AppCompatActivity {
         final EditText editTextWithIPAddress = findViewById(R.id.editText);
         Button b = findViewById(R.id.button);
         b.setOnClickListener(new View.OnClickListener() {
-            String address = editTextWithIPAddress.getText().toString();
             @Override
             public void onClick(View view) {
-                if (address != null) {
-                    Thread t = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                clientSocket = new Socket(address, 1024);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            clientSocket = new Socket(editTextWithIPAddress.getText().toString(), 1024);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                    });
-                    t.start();
-                } else {
-                    Toast.makeText(getApplicationContext(), "Please, enter a valid address",
-                            Toast.LENGTH_SHORT).show();
-                }
+                    }
+                });
+                t.start();
             }
         });
 
@@ -56,7 +49,11 @@ public class ControllerActivity extends AppCompatActivity {
                 for (int i = 0; i < 4; i++) {
                     // if the bit on position i is set
                     if (((0x01 << i) & buttons) > 0) {
-                        // TODO: Shoot gun
+                        try {
+                            new NetworkHandlerTask(clientSocket, "SHOOT").execute();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 // if buttons == 0, the user stopped touching the view
@@ -74,12 +71,14 @@ public class ControllerActivity extends AppCompatActivity {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        break;
                     case DirectionView.DIRECTION_RIGHT:
                         try {
                             new NetworkHandlerTask(clientSocket, "DIRECTION_RIGHT").execute();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        break;
                 }
                 // if buttons == 0, the user stopped touching the view
             }
